@@ -1,9 +1,7 @@
-from sklearn.neighbors import NearestNeighbors
+import numpy
 import argparse
-import sklearn
 from sklearn import svm
 from sklearn import tree
-import numpy
 from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
 from scipy import spatial
@@ -23,7 +21,6 @@ class CharacterRecognition:
 
             for line in trainingData:
                 trainingLabels.append(line[len(trainingData[0]) - 1])
-            #for line in trainingData:
                 trainingChars.append(line[: - 1])
 
             numpy.savetxt(self.training + '_label.txt', trainingLabels)
@@ -35,8 +32,7 @@ class CharacterRecognition:
 
             for line in testData:
                 testLabels.append(line[len(testData[0]) - 1])
-            #for line in trainingData:
-                testChars.append(line[:  - 1])
+                testChars.append(line[: - 1])
 
             numpy.savetxt(self.test + '_label.txt', testLabels)
             numpy.savetxt(self.test + '_chars.txt', testChars)
@@ -62,11 +58,12 @@ class CharacterRecognition:
         return classifier.predict(test_chars)
 
     def confusionMatrix(self, data, labels):
-        return confusion_matrix(labels, data)
+        return confusion_matrix(data, labels)
 
     def vote(self, knn, svm, tree):
         result = []
-        for i in zip(knn, svm, tree):
+        z = zip(knn, svm, tree)
+        for i in z:
             result.append(Counter(i).most_common(1)[0][0])
         return result
 
@@ -100,20 +97,39 @@ if __name__ == '__main__':
     testCharsFile = args.trainingFile[: - 4] + '_chars.txt'
     testChars = charsRec.fileToMatrix(testCharsFile)
 
-    svm = charsRec.svm(trainingLabels, trainingChars, testChars)
+    _svm = charsRec.svm(trainingLabels, trainingChars, testChars)
     knn = charsRec.knn(trainingLabels, trainingChars, testChars)
     decisionTree = charsRec.decisionTree(trainingLabels, trainingChars, testChars)
 
-    #vote = charsRec.vote(knn, svm, decisionTree)
-    #matrix = charsRec.confusionMatrix(vote, testLabels)
-    matrix = charsRec.confusionMatrix(svm, testLabels)
+    vote = charsRec.vote(knn, _svm, decisionTree)
+    matrix = charsRec.confusionMatrix(vote, testLabels)
+    #matrix = charsRec.confusionMatrix(knn, testLabels)
 
     charsRec.countClasses(matrix)
 
-    accuracy = accuracy_score(testLabels, svm) * 100
+    print('Vote')
+#    charsRec.countClasses(vote)
+    accuracy = accuracy_score(testLabels, vote) * 100
     print('Accuracy = ' + repr(accuracy) + '%\n')
     #accuracy = accuracy_score(testLabels, knn) * 100
     #print('Accuracy = ' + repr(accuracy) + '%\n')
 
+    print('Decition Tree')
+    print(repr(decisionTree))
+    matrixDecisionTree = charsRec.confusionMatrix(decisionTree, testLabels)
+    charsRec.countClasses(matrixDecisionTree)
+    decisionTreeAccuracy = accuracy_score(testLabels, decisionTree) * 100
+    print('Accuracy = ' + repr(decisionTreeAccuracy) + '%\n')
 
+    print('SVM')
+    print(repr(_svm))
+    matrixSvm = charsRec.confusionMatrix(_svm, testLabels)
+    charsRec.countClasses(matrixSvm)
+    svmTreeAccuracy = accuracy_score(testLabels, _svm) * 100
+    print('Accuracy = ' + repr(svmTreeAccuracy) + '%\n')
 
+    print('knn')
+    matrixKnn = charsRec.confusionMatrix(knn, testLabels)
+    charsRec.countClasses(matrixKnn)
+    accuracyKnn = accuracy_score(testLabels, knn) * 100
+    print('Accuracy KNN = ' + repr(accuracyKnn) + '%\n')
