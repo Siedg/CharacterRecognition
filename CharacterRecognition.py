@@ -1,12 +1,10 @@
 import numpy
 import argparse
-from sklearn import svm
-from sklearn import tree
-from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
+from sklearn import svm, tree
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
-from scipy import spatial
-from sys import argv
 from collections import Counter
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 
 class CharacterRecognition:
     def __init__(self, training, test):
@@ -47,7 +45,7 @@ class CharacterRecognition:
         classifier.fit(training_chars, training_labels)
         return classifier.predict(test_chars)
 
-    def decisionTree(self, training_labels, training_chars, test_chars):
+    def decisionTree(self, training_chars, training_labels, test_chars):
         classifier = tree.DecisionTreeClassifier()
         classifier.fit(training_chars, training_labels)
         return classifier.predict(test_chars)
@@ -57,13 +55,24 @@ class CharacterRecognition:
         classifier.fit(training_chars, training_labels)
         return classifier.predict(test_chars)
 
+    def randomForest(self, training_chars, training_labels, test_chars):
+        classifier = RandomForestClassifier()
+        classifier.fit(training_chars, training_labels)
+        print('RandomForest Importances')
+        print(classifier.feature_importances_)
+        return classifier.predict(test_chars)
+
+    def adaBoost(self, training_chars, training_labels, test_chars):
+        classifier = AdaBoostClassifier()
+        classifier.fit(training_chars, training_labels)
+        return classifier.predict(test_chars)
+
     def confusionMatrix(self, data, labels):
         return confusion_matrix(data, labels)
 
-    def vote(self, knn, svm, tree):
+    def vote(self, knn, svm, tree, randomForest):
         result = []
-        z = zip(knn, svm, tree)
-        for i in z:
+        for i in zip(knn, svm, tree, randomForest):
             result.append(Counter(i).most_common(1)[0][0])
         return result
 
@@ -92,44 +101,56 @@ if __name__ == '__main__':
     trainingCharsFile = args.trainingFile[: - 4] + '_chars.txt'
     trainingChars = charsRec.fileToMatrix(trainingCharsFile)
 
-    testLabelsFile = args.trainingFile[: - 4] + '_label.txt'
+    testLabelsFile = args.testFile[: - 4] + '_label.txt'
     testLabels = charsRec.fileToMatrix(testLabelsFile)
-    testCharsFile = args.trainingFile[: - 4] + '_chars.txt'
+    testCharsFile = args.testFile[: - 4] + '_chars.txt'
     testChars = charsRec.fileToMatrix(testCharsFile)
 
-    _svm = charsRec.svm(trainingLabels, trainingChars, testChars)
-    knn = charsRec.knn(trainingLabels, trainingChars, testChars)
-    decisionTree = charsRec.decisionTree(trainingLabels, trainingChars, testChars)
+    #_svm = charsRec.svm(trainingLabels, trainingChars, testChars)
+    #knn = charsRec.knn(trainingLabels, trainingChars, testChars)
+    #decisionTree = charsRec.decisionTree(trainingChars, trainingLabels, testChars)
+    #randomForest = charsRec.randomForest(trainingChars, trainingLabels, testChars)
+    adaBoost = charsRec.adaBoost(trainingChars, trainingLabels, testChars)
+    #vote = charsRec.vote(knn, _svm, decisionTree, randomForest)
 
-    vote = charsRec.vote(knn, _svm, decisionTree)
-    matrix = charsRec.confusionMatrix(vote, testLabels)
-    #matrix = charsRec.confusionMatrix(knn, testLabels)
-
-    charsRec.countClasses(matrix)
-
-    print('Vote')
-#    charsRec.countClasses(vote)
-    accuracy = accuracy_score(testLabels, vote) * 100
-    print('Accuracy = ' + repr(accuracy) + '%\n')
-    #accuracy = accuracy_score(testLabels, knn) * 100
+    #print('vote')
+    #matrixVote = charsRec.confusionMatrix(vote, testLabels)
+    #charsRec.countClasses(matrixVote)
+    #accuracy = accuracy_score(testLabels, vote) * 100
     #print('Accuracy = ' + repr(accuracy) + '%\n')
 
-    print('Decition Tree')
-    print(repr(decisionTree))
-    matrixDecisionTree = charsRec.confusionMatrix(decisionTree, testLabels)
-    charsRec.countClasses(matrixDecisionTree)
-    decisionTreeAccuracy = accuracy_score(testLabels, decisionTree) * 100
-    print('Accuracy = ' + repr(decisionTreeAccuracy) + '%\n')
+#    print('Decition Tree')
+#    print(repr(decisionTree))
+#    matrixDecisionTree = charsRec.confusionMatrix(decisionTree, testLabels)
+#    charsRec.countClasses(matrixDecisionTree)
+#    decisionTreeAccuracy = accuracy_score(testLabels, decisionTree) * 100
+#    print('Accuracy = ' + repr(decisionTreeAccuracy) + '%\n')
 
-    print('SVM')
-    print(repr(_svm))
-    matrixSvm = charsRec.confusionMatrix(_svm, testLabels)
-    charsRec.countClasses(matrixSvm)
-    svmTreeAccuracy = accuracy_score(testLabels, _svm) * 100
-    print('Accuracy = ' + repr(svmTreeAccuracy) + '%\n')
+#    print('SVM')
+#    print(repr(_svm))
+#    matrixSvm = charsRec.confusionMatrix(_svm, testLabels)
+#    charsRec.countClasses(matrixSvm)
+#    svmTreeAccuracy = accuracy_score(testLabels, _svm) * 100
+#    print('Accuracy = ' + repr(svmTreeAccuracy) + '%\n')
 
-    print('knn')
-    matrixKnn = charsRec.confusionMatrix(knn, testLabels)
-    charsRec.countClasses(matrixKnn)
-    accuracyKnn = accuracy_score(testLabels, knn) * 100
-    print('Accuracy KNN = ' + repr(accuracyKnn) + '%\n')
+#    print('knn k = ', end='')
+#    print(args.k)
+#    print(repr(knn))
+#    matrixKnn = charsRec.confusionMatrix(knn, testLabels)
+#    charsRec.countClasses(matrixKnn)
+#    accuracyKnn = accuracy_score(testLabels, knn) * 100
+#    print('Accuracy = ' + repr(accuracyKnn) + '%\n')
+
+ #   print('RandomForest')
+ #   print(repr(randomForest))
+ #   matrixRandomForest = charsRec.confusionMatrix(randomForest, testLabels)
+ #   charsRec.countClasses(matrixRandomForest)
+ #   accuracyRandomForest = accuracy_score(testLabels, randomForest) * 100
+ #   print('Accuracy = ' + repr(accuracyRandomForest) + '%\n')
+
+    print('AdaBoost')
+    print(repr(adaBoost))
+    matrixAdaBoost = charsRec.confusionMatrix(adaBoost, testLabels)
+    charsRec.countClasses(matrixAdaBoost)
+    accuracyAdaBoost = accuracy_score(testLabels, adaBoost) * 100
+    print('Accuracy = ' + repr(accuracyAdaBoost) + '%\n')
